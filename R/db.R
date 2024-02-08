@@ -1,4 +1,4 @@
-drivers <- function() c("local")
+drivers <- function() c("local", "mongodb")
 
 new_db <- function(driver, ...) {
   stopifnot(is.character(driver))
