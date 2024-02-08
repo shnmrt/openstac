@@ -39,7 +39,7 @@ api <- create_stac(
 api <- set_db(
   api, driver = "mongodb",
   db = "openlandmap",
-  url = "mongodb://localhost:23874" # the same as the container port
+  url = "mongodb://0.0.0.0:27017" # the same as the container port
 )
 
 #* Custom error handling
