@@ -41,15 +41,15 @@ update_db <- function(db, collection) {
   items$links <- NULL
   # update db
   # ... call mongodb ingest functions <<<<<<<<<<<<<<
-  db$collections$push(collection)
+  db$collections$insert(collection)
   for (item in items$features) {
-    db$items$push(item)
+    db$items$insert(item)
   }
 }
 
 create_db <- function(catalog_url, db_name, db_url, overwrite = FALSE) {
   rel <- NULL
-  catalog <- rstac::stac_read(catalog_url)
+  catalog <- rstac::read_stac(catalog_url)
   # prepare db
   db <- list(
     collections = mongolite::mongo(collection = "collections", db = db_name, url = db_url),
@@ -69,7 +69,7 @@ create_db <- function(catalog_url, db_name, db_url, overwrite = FALSE) {
 # OpenLandMap
 create_db(
   catalog_url = "https://s3.eu-central-1.wasabisys.com/stac/openlandmap/catalog.json",
-  db_name = "docker/olm/openlandmap.rds",
-  db_url = "mongodb::/localhost:3453",
+  db_name = "openlandmap",
+  db_url = "mongodb://0.0.0.0:27017",
   overwrite = FALSE
 )
