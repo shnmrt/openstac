@@ -21,27 +21,33 @@ new_db.mongodb <- function(driver, db, url, ...) {
 
 #' @export
 db_collections_id_exist.mongodb <- function(db, ids) {
-  ids %in% names(db$collections)
+  print('db_collections_id_exist.mongodb')
+  result <- db$collections$find(query = mongo_in("id", ids), fields= '{"id":true}')
+  ids %in% result$id
 }
 
 #' @export
 db_collections.mongodb <- function(db) {
+  print('db_collections.mongodb')
   unname(db$collections)
 }
 
 #' @export
 db_collection.mongodb <- function(db, collection_id) {
+  print('db_collection.mongodb')
   mongo_collection(db, collection_id)
 }
 
 #' @export
 db_items_id_exist.mongodb <- function(db, collection_id, ids) {
+  print('db_items_id_exist.mongodb')
   items <- mongo_items(db, collection_id)
   ids %in% mongo_items_id(items)
 }
 
 #' @export
 db_items.mongodb <- function(db, collection_id, limit, bbox, datetime, page) {
+  print('db_items.mongodb ')
   items <- mongo_items(db, collection_id)
   # datetime filter...
   exact_date <- get_datetime_exact(datetime)
@@ -69,6 +75,7 @@ db_items.mongodb <- function(db, collection_id, limit, bbox, datetime, page) {
 
 #' @export
 db_item.mongodb <- function(db, collection_id, item_id) {
+  print('db_item.mongodb')
   item <- mongo_items(db, collection_id)
   item <- mongo_filter_ids(item, item_id)
   item <- item$features[[1]]
@@ -79,13 +86,14 @@ db_item.mongodb <- function(db, collection_id, item_id) {
 
 #' @export
 db_search.mongodb <- function(db,
-                            limit,
-                            bbox,
-                            datetime,
-                            intersects,
-                            ids,
-                            collections,
-                            page) {
+                              limit,
+                              bbox,
+                              datetime,
+                              intersects,
+                              ids,
+                              collections,
+                              page) {
+  print('db_search.mongodb')
   items <- mongo_search_items(features)
   items$numberMatched <- length(items$features)
   # manage pagination
@@ -93,6 +101,7 @@ db_search.mongodb <- function(db,
 }
 
 mongo_new_items <- function(features) {
+  print('mongo_new_items')
   structure(list(
     type = "FeatureCollection",
     features = features
@@ -100,56 +109,83 @@ mongo_new_items <- function(features) {
 }
 
 mongo_collection <- function(db, collection_id) {
-  doc <- db$collections[[collection_id]]
+  print('mongo_collection')
+  doc <- db$collections$find(
+    paste0('{"id":"', collection_id, '"}')
+  )
   class(doc) <- c("doc_collection", "list")
+  print(doc)
   doc
 }
 
 mongo_items <- function(db, collection_id) {
-  doc <- db$items[[collection_id]]
-  class(doc) <- c("doc_items", "list")
-  doc
+  print('mongo_items')
+  result <- db$items$iterate(
+    query=paste0('{"collection":"', collection_id, '"}'),
+  )
+  items <- list()
+  while(!is.null(x <- result$one())){
+    item  <- list_to_stac_item(x)
+    items <- append(items, item)
+  }
+  structure(
+    list(
+      type="FeatureCollection",
+      features=items,
+      links = list()
+      ),
+    class=c("doc_items", "rstac_doc","list")
+    )
 }
 
 mongo_items_id <- function(items) {
+  print('mongo_items_id')
+  print(items)
   rstac::items_reap(items, "id")
 }
 
 mongo_items_datetime <- function(items) {
+  print('mongo_items_datetime ')
   as.Date(rstac::items_datetime(items))
 }
 
 mongo_filter_ids <- function(items, ids) {
+  print('mongo_filter_ids')
   select <- which(mongo_items_id(items) %in% ids)
   items$features <- items$features[select]
   items
 }
 
 mongo_filter_exact_date <- function(items, exact_date) {
+  print('mongo_filter_exact_date')
   select <- mongo_items_datetime(items) == as.Date(exact_date)
   items$features <- items$features[select]
   items
 }
 
 mongo_filter_start_date <- function(items, start_date) {
+  print('mongo_filter_start_date')
   select <- mongo_items_datetime(items) >= as.Date(start_date)
   items$features <- items$features[select]
   items
 }
 
 mongo_filter_end_date <- function(items, end_date) {
+  print('mongo_filter_end_date')
   select <- mongo_items_datetime(items) <= as.Date(end_date)
   items$features <- items$features[select]
   items
 }
 
 mongo_filter_spatial <- function(items, geom) {
+  print('mongo_filter_spatial')
   select <- rstac::items_intersects(items, geom)
   items$features <- items$features[select]
   items
 }
 
 mongo_paginate_items <- function(items, limit, page) {
+  print('mongo_paginate_items')
   if (is.null(limit)) limit <- 10
   if (is.null(page)) page <- 1
   pages <- get_pages(items, limit)
@@ -172,3 +208,26 @@ mongo_paginate_items <- function(items, limit, page) {
   items$numberReturned <- length(items$features)
   items
 }
+
+mongo_list <- function(values) {
+  UseMethod("mongo_list", values)
+}
+
+#' @export
+mongo_list.numeric <- function(values) {
+  paste0(values, collapse = ",")
+}
+
+#' @export
+mongo_list.default <- function(values) {
+  paste0('"', values, '"', collapse = ",")
+}
+
+mongo_in <- function(field, values) {
+  paste0('{"', field, '":{"$in":[', mongo_list(values), ']}}')
+}
+
+list_to_stac_item <- function(item) {
+  list(structure(item, class = c("doc_item", "rstac_doc","list")))
+}
+
