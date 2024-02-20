@@ -174,6 +174,7 @@ function(req,
   }
   if (missing(bbox)) bbox <- NULL
   if (missing(intersects)) intersects <- NULL
+  print('this one')
   api_stopifnot(
     is.null(bbox) || is.null(intersects),
     status = 400,
@@ -214,7 +215,7 @@ function(req,
     check_page(page)
   }
   # call api search asynchronously
-  promises::future_promise({
+  # promises::future_promise({
     api_search(
       api = api,
       req = req,
@@ -227,7 +228,7 @@ function(req,
       collections = collections,
       page = page
     )
-  })
+  # })
 }
 
 #* Search endpoint
@@ -252,6 +253,7 @@ function(req, res) {
   }
   if (missing(bbox)) bbox <- NULL
   if (missing(intersects)) intersects <- NULL
+  print('this two')
   api_stopifnot(
     is.null(bbox) || is.null(intersects),
     status = 400,
@@ -287,7 +289,7 @@ function(req, res) {
     check_page(page)
   }
   # call api search asynchronously
-  promises::future_promise({
+  # promises::future_promise({
     api_search(
       api = api,
       req = req,
@@ -300,5 +302,5 @@ function(req, res) {
       collections = collections,
       page = page
     )
-  })
+  # })
 }
