@@ -116,7 +116,6 @@ function(req,
   if (missing(datetime)) datetime <- NULL
   if (!is.null(datetime)) {
     datetime <- parse_datetime(datetime[[1]])
-    check_datetime(datetime)
   }
   if (!is.null(page)) {
     page <- parse_int(page[[1]])
@@ -187,7 +186,6 @@ function(req,
   if (missing(datetime)) datetime <- NULL
   if (!is.null(datetime)) {
     datetime <- parse_datetime(datetime[[1]])
-    check_datetime(datetime)
   }
   method <- get_method(req)
   if (!is.null(intersects)) {
@@ -196,7 +194,7 @@ function(req,
       status = 405,
       "the request method is not supported"
     )
-    intersects <- parse_json(intersects)
+    intersects <- parse_geojson(intersects)
     check_intersects(intersects)
   }
   if (missing(ids)) ids <- NULL
@@ -266,7 +264,6 @@ function(req, res) {
   if (missing(datetime)) datetime <- NULL
   if (!is.null(datetime)) {
     datetime <- parse_datetime(datetime[[1]])
-    check_datetime(datetime)
   }
   method <- get_method(req)
   if (!is.null(intersects)) {
@@ -275,7 +272,7 @@ function(req, res) {
       status = 405,
       "the request method is not supported"
     )
-    intersects <- parse_json(intersects)
+    intersects <- parse_geojson(intersects)
     check_intersects(intersects)
   }
   if (missing(ids)) ids <- NULL
